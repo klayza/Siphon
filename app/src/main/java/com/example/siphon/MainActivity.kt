@@ -1,6 +1,10 @@
 package com.example.siphon
 
+import android.graphics.Color
+import android.graphics.drawable.Icon
+import android.media.Image
 import android.os.Bundle
+import android.webkit.URLUtil
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -9,16 +13,11 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberImagePainter
 import com.example.siphon.ui.theme.SiphonTheme
@@ -36,13 +35,7 @@ class MainActivity : ComponentActivity() {
                 {
                     // Box(modifier = Modifier.fillMaxSize().background(color = Color.DarkGray))
                     ToolBar()
-                    var text by rememberSaveable { mutableStateOf("") }
-                    TextField(
-                        value = text,
-                        onValueChange = { text = it },
-                        label = { Text("Enter a directory:") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    TextInput()
                     CoilImage()
                 }
             }
@@ -51,35 +44,29 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun CoilImage() {
+fun CoilImage(url: String = "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwww.mordeo.org%2Ffiles%2Fuploads%2F2020%2F01%2FPine-Red-Trees-Road-4K-Ultra-HD-Mobile-Wallpaper.jpg&f=1&nofb=1") {
     Box(
         contentAlignment = Alignment.Center
     ) {
-        val painter = rememberImagePainter(
-            data = "https://wallpapers.com/images/high/captain-marvel-mobile-94h0epto4hul40bn.jpg",
-            builder = {}
-        )
+        val painter = rememberImagePainter(data = url)
         // Stretches image
         Image(modifier = Modifier.fillMaxSize(), painter = painter, contentDescription = "Image Description", contentScale = ContentScale.Fit)
     }
 }
 
 @Composable
-fun BackgroundColor() {
-    Surface(color = Color.DarkGray) {}
+fun TextInput() {
+    var text by remember { mutableStateOf("") }
+    TextField(
+        value = text,
+        label = { Text("Enter a directory: ")},
+        onValueChange = { text = it },
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true,
 
-}
-
-@Composable
-fun Greeting(name: String) {
-    Text(text = "Hello $name!")
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    SiphonTheme {
-        Greeting("Android")
+    )
+    if (URLUtil.isValidUrl(text)){
+        ScrapeImages(text)
     }
 }
 
@@ -100,6 +87,19 @@ fun ToolBar() {
                     Icon(Icons.Filled.Settings, null)
                 }
             })
+    }
+}
+
+@Composable
+fun ScrapeImages(url: String="http://www.irtc.org/ftp/pub/stills/") {
+    var Images = emptyList<String>()
+
+    "http://httpbin.org/get".httpGet().response { request, response, result ->
+
+        // Need to change to find files instead of an extension
+        if (url.endsWith(".jpg") || url.endsWith(".png")) {
+            CoilImage(url)
+        }
     }
 }
 
