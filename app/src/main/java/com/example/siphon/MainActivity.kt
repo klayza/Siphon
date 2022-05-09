@@ -1,8 +1,5 @@
 package com.example.siphon
 
-import android.graphics.Color
-import android.graphics.drawable.Icon
-import android.media.Image
 import android.os.Bundle
 import android.webkit.URLUtil
 import androidx.activity.ComponentActivity
@@ -15,7 +12,6 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
@@ -92,16 +88,15 @@ fun ToolBar() {
 
 @Composable
 fun ScrapeImages(url: String="http://www.irtc.org/ftp/pub/stills/") {
-    var Images = emptyList<String>()
+    val images = mutableListOf<String>()
 
-    "http://httpbin.org/get".httpGet().response { request, response, result ->
-
-        // Need to change to find files instead of an extension
-        if (url.endsWith(".jpg") || url.endsWith(".png")) {
-            CoilImage(url)
-        }
+    // Need to change to find files instead of an extension
+    if (".jpg" in url || ".png" in url)
+    {
+        CoilImage(url)
     }
 }
+
 
 
 

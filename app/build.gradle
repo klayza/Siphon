@@ -63,7 +63,4 @@ dependencies {
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
     implementation("io.coil-kt:coil-compose:2.0.0-rc03")
-    implementation 'com.github.kittinunf.fuel:fuel:<latest-version>'
-    implementation 'com.github.kittinunf.fuel:<package>:<latest-version>'
-    implementation("com.github.kittinunf.result:result:«version»")  // Unsure
 }
