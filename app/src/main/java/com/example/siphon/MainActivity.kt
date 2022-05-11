@@ -21,12 +21,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberImagePainter
 import com.example.siphon.ui.theme.SiphonTheme
-import okhttp3.OkHttp
-import okhttp3.OkHttpClient
+import okhttp3.*
+import java.io.IOException
 
 
 // var images = mutableListOf<String>()
-var images = mutableListOf<String>("http://www.irtc.org/ftp/pub/stills/1997-08-31/arevotma.jpg", "http://www.irtc.org/ftp/pub/stills/2006-12-31/rb_shoot.jpg", "http://www.irtc.org/ftp/pub/stills/2006-12-31/matches.jpg")
+// line below is temp
+var images = mutableListOf("http://www.irtc.org/ftp/pub/stills/1997-08-31/arevotma.jpg", "http://www.irtc.org/ftp/pub/stills/2006-12-31/rb_shoot.jpg", "http://www.irtc.org/ftp/pub/stills/2006-12-31/matches.jpg")
 var cur_index = 0
 var scrolledUp = false
 var scrolledDown = false
@@ -45,7 +46,7 @@ class MainActivity : ComponentActivity() {
                     // Box(modifier = Modifier.fillMaxSize().background(color = Color.DarkGray))
                     ToolBar()
                     TextInput()
-                    CoilImage("https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwww.mordeo.org%2Ffiles%2Fuploads%2F2020%2F01%2FPine-Red-Trees-Road-4K-Ultra-HD-Mobile-Wallpaper.jpg&f=1&nofb=1")
+                    CoilImage()
                 }
             }
         }
@@ -53,7 +54,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun CoilImage(url: String) {
+fun CoilImage(url: String = "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwww.mordeo.org%2Ffiles%2Fuploads%2F2020%2F01%2FPine-Red-Trees-Road-4K-Ultra-HD-Mobile-Wallpaper.jpg&f=1&nofb=1") {
     Box(contentAlignment = Alignment.Center) {
         var offsetX by remember { mutableStateOf(0f) }
         var offsetY by remember { mutableStateOf(0f) }
@@ -67,8 +68,11 @@ fun CoilImage(url: String) {
 
                     val (x, y) = dragAmount
                     when {
-                        y > 0 -> { scrolledDown = true }   // User swipes down
-                        y < 0 -> { scrolledUp = true; } // User swipes up
+                        y > 0 -> {
+                            scrolledDown = true
+                        }   // User swipes down
+                        y < 0 -> {
+                            scrolledUp = true; } // User swipes up
                     }
 
                     offsetX += dragAmount.x
@@ -128,7 +132,7 @@ fun ToolBar() {
 }
 
 @Composable
-fun ScrapeImages(url: String="http://www.irtc.org/ftp/pub/stills/") {
+fun ScrapeImages(url: String) {
 
     // Need to change to find files instead of an extension
     if (".jpg" in url || ".png" in url)
@@ -137,7 +141,42 @@ fun ScrapeImages(url: String="http://www.irtc.org/ftp/pub/stills/") {
         CoilImage(url)
     }
     else {
-        OkHttpClient client = new OkHttpClient()
+        // val url = "http://www.irtc.org/ftp/pub/stills/2006-12-31/"      // Will need to be replaced
+        val request = Request.Builder().url(url).build()
+        val client = OkHttpClient()
+        client.newCall(request).enqueue(object: Callback {
+            override fun onResponse(call: Call, response: Response) {
+                val body = response.body?.string().toString()
+                Log.d("PAK", body)
+
+                // Find all elements on page
+                val elements = body.split("<").toTypedArray()
+                for (emt in elements) {
+                    Log.d("PAK", emt)
+                    if (emt.endsWith(".jpg") || emt.endsWith(".png")) {
+                        var temp = ""
+                        for (i in emt.lastIndex downTo 0) {
+                            if (emt[i] == '>') {
+                                images.add(url.plus(temp.reversed()))
+                                temp = ""
+                                continue
+                            }
+                            else {
+                                temp += emt[i]
+                            }
+                        }
+                    }
+                }
+                for (img in images)
+                    Log.d("PAK", img)
+
+            }
+
+            override fun onFailure(call: Call, e: IOException) {
+                Log.d("PAK", "Failed to connect")
+            }
+
+        })
     }
 }
 
