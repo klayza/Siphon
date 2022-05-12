@@ -25,9 +25,7 @@ import okhttp3.*
 import java.io.IOException
 
 
-// var images = mutableListOf<String>()
-// line below is temp
-var images = mutableListOf("http://www.irtc.org/ftp/pub/stills/1997-08-31/arevotma.jpg", "http://www.irtc.org/ftp/pub/stills/2006-12-31/rb_shoot.jpg", "http://www.irtc.org/ftp/pub/stills/2006-12-31/matches.jpg")
+var images = mutableListOf<String>()
 var cur_index = 0
 var scrolledUp = false
 var scrolledDown = false
@@ -38,15 +36,15 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             SiphonTheme {
+                // Sets the column for the image
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.Center,
                 )
                 {
-                    // Box(modifier = Modifier.fillMaxSize().background(color = Color.DarkGray))
-                    ToolBar()
-                    TextInput()
-                    CoilImage()
+                    ToolBar()   // Adds the toolbar
+                    TextInput() // Initializes the textbox
+                    CoilImage() // Sets the bg image to default
                 }
             }
         }
@@ -54,6 +52,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
+// Takes url as argument, and will set the background to image url.
 fun CoilImage(url: String = "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwww.mordeo.org%2Ffiles%2Fuploads%2F2020%2F01%2FPine-Red-Trees-Road-4K-Ultra-HD-Mobile-Wallpaper.jpg&f=1&nofb=1") {
     Box(contentAlignment = Alignment.Center) {
         var offsetX by remember { mutableStateOf(0f) }
@@ -66,13 +65,11 @@ fun CoilImage(url: String = "https://external-content.duckduckgo.com/iu/?u=https
                 detectDragGestures { change, dragAmount ->
                     change.consumeAllChanges()
 
+                    // Determines which direction the user is scrolling
                     val (x, y) = dragAmount
                     when {
-                        y > 0 -> {
-                            scrolledDown = true
-                        }   // User swipes down
-                        y < 0 -> {
-                            scrolledUp = true; } // User swipes up
+                        y > 0 -> { scrolledDown = true }   // User swipes down
+                        y < 0 -> { scrolledUp = true; } // User swipes up
                     }
 
                     offsetX += dragAmount.x
@@ -83,6 +80,7 @@ fun CoilImage(url: String = "https://external-content.duckduckgo.com/iu/?u=https
             contentDescription = "Image Description",
             contentScale = ContentScale.Fit)
 
+            // Invokes function depending on swipe direction
             Log.d("pak", "before if block. down: ${scrolledDown} up: ${scrolledUp}")
             if (scrolledUp) {
                 Log.d("PAK", "running next img")
@@ -96,6 +94,7 @@ fun CoilImage(url: String = "https://external-content.duckduckgo.com/iu/?u=https
 }
 
 @Composable
+// Asks for directory url
 fun TextInput() {
     var text by remember { mutableStateOf("") }
     TextField(
@@ -106,12 +105,16 @@ fun TextInput() {
         singleLine = true,
 
     )
+    // When the url entered is a valid url, it begins looking for images
     if (URLUtil.isValidUrl(text)){
         ScrapeImages(text)
     }
 }
 
 @Composable
+// The toolbar for a list view and settings
+// List allows you to select previous urls
+// Settings allow you to customize experience
 fun ToolBar() {
     Column {
         TopAppBar(
@@ -132,32 +135,41 @@ fun ToolBar() {
 }
 
 @Composable
+// Function to set and scrape for images
 fun ScrapeImages(url: String) {
-
-    // Need to change to find files instead of an extension
-    if (".jpg" in url || ".png" in url)
+    // If the user enters an image url
+    if (".jpg" in url || ".png" in url || ".jpeg" in url)
     {
         Log.d("PAK", "scrape ${url}")
         CoilImage(url)
+        return
     }
+
+    // To avoid crashing
+    else if (url == "https://" || url == "http://") {
+        return
+    }
+
+    // When the user enters a directory
     else {
-        // val url = "http://www.irtc.org/ftp/pub/stills/2006-12-31/"      // Will need to be replaced
+        // Request init
         val request = Request.Builder().url(url).build()
         val client = OkHttpClient()
         client.newCall(request).enqueue(object: Callback {
+
+            // When a response is recieved
             override fun onResponse(call: Call, response: Response) {
                 val body = response.body?.string().toString()
-                Log.d("PAK", body)
 
                 // Find all elements on page
-                val elements = body.split("<").toTypedArray()
+                val elements = body.split("<").toTypedArray()   // Adds all elements to array
                 for (emt in elements) {
-                    Log.d("PAK", emt)
+                    // Looks for images and adds them to list
                     if (emt.endsWith(".jpg") || emt.endsWith(".png")) {
                         var temp = ""
                         for (i in emt.lastIndex downTo 0) {
                             if (emt[i] == '>') {
-                                images.add(url.plus(temp.reversed()))
+                                images.add(url.plus("/" + temp.reversed()))
                                 temp = ""
                                 continue
                             }
@@ -170,17 +182,27 @@ fun ScrapeImages(url: String) {
                 for (img in images)
                     Log.d("PAK", img)
 
+
             }
 
+            // When the request fails
             override fun onFailure(call: Call, e: IOException) {
                 Log.d("PAK", "Failed to connect")
             }
 
         })
+        // After scraping for images, sets image to bg (Not working)
+        Log.d("PAK", "Herere")
+        Log.d("PAK", images.size.toString())
+        if (images.isNotEmpty()) {
+            Log.d("PAK", "herere 2")
+            CoilImage(images[0])
+        }
     }
 }
 
 @Composable
+// Sets bg to the next image in the image list (Not working)
 fun nextImage() {
     Log.d("PAK", "block ${images[cur_index]}")
     if (cur_index == images.size) {
