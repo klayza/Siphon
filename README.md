@@ -1,5 +1,5 @@
 # Siphon
- Browse media given a directory url
+ Browse media on android using a url as a source, providing a simple scrolling interface
 
 # Features
 - Save and access url paths
