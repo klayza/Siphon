@@ -1,3 +1,6 @@
+// Clayton Wieberg
+// 5-12-2022
+// Siphon (Capstone Project)
 package com.example.siphon
 
 import android.os.Bundle
@@ -68,8 +71,8 @@ fun CoilImage(url: String = "https://external-content.duckduckgo.com/iu/?u=https
                     // Determines which direction the user is scrolling
                     val (x, y) = dragAmount
                     when {
-                        y > 0 -> { scrolledDown = true }   // User swipes down
-                        y < 0 -> { scrolledUp = true; } // User swipes up
+                        y > 0 -> { scrolledDown = true; Log.d("PAK", "Scrolled down") }   // User swipes down
+                        y < 0 -> { scrolledUp = true; Log.d("PAK", "Scrolled up") } // User swipes up
                     }
 
                     offsetX += dragAmount.x
@@ -164,6 +167,7 @@ fun ScrapeImages(url: String) {
                 // Find all elements on page
                 val elements = body.split("<").toTypedArray()   // Adds all elements to array
                 for (emt in elements) {
+                    Log.d("PAK", emt)
                     // Looks for images and adds them to list
                     if (emt.endsWith(".jpg") || emt.endsWith(".png")) {
                         var temp = ""
