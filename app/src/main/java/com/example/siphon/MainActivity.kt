@@ -9,8 +9,11 @@ import android.webkit.URLUtil
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -18,17 +21,25 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.consumeAllChanges
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import coil.compose.rememberImagePainter
+import coil.request.ImageRequest
 import com.example.siphon.ui.theme.SiphonTheme
 import okhttp3.*
 import java.io.IOException
+import kotlin.math.roundToInt
 
 
-var images = mutableListOf<String>()
+var images = mutableListOf<String>("http://www.irtc.org/ftp/pub/stills/2006-12-31/ornmcplx.jpg")
 var cur_index = 0
 var scrolledUp = false
 var scrolledDown = false
@@ -45,14 +56,61 @@ class MainActivity : ComponentActivity() {
                     verticalArrangement = Arrangement.Center,
                 )
                 {
-                    ToolBar()   // Adds the toolbar
+                    SwipeableSample()
+                    /*ToolBar()   // Adds the toolbar
                     TextInput() // Initializes the textbox
-                    CoilImage() // Sets the bg image to default
+                    CoilImage() // Sets the bg image to default*/
                 }
             }
         }
     }
 }
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun SwipeableSample() {
+    val squareSize = 50.dp
+
+    val swipeableState = rememberSwipeableState("A")
+    val sizePx = with(LocalDensity.current) { (350.dp - squareSize).toPx() }
+    val anchors = mapOf(0f to "A", sizePx / 2 to "B", sizePx to "C")
+    Log.d("PAK", anchors.keys.toString())
+    val image = images[0]
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .swipeable(
+                state = swipeableState,
+                anchors = anchors,
+                thresholds = { _, _ -> FractionalThreshold(0.5f) },
+                orientation = Orientation.Horizontal,
+                resistance = ResistanceConfig(0.9f, 1f)
+            )
+            .background(Color.Black)
+    ) {
+        Box(
+            Modifier
+                .offset { IntOffset(swipeableState.offset.value.roundToInt(), 0) }
+                .size(squareSize)
+                .background(Color.Red),
+            contentAlignment = Alignment.Center
+        ) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(image)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = "desc",
+                modifier = Modifier.clip(CircleShape).fillMaxSize(),
+                contentScale = ContentScale.Fit
+
+            )
+
+        }
+    }
+}
+
 
 @Composable
 // Takes url as argument, and will set the background to image url.
@@ -71,8 +129,12 @@ fun CoilImage(url: String = "https://external-content.duckduckgo.com/iu/?u=https
                     // Determines which direction the user is scrolling
                     val (x, y) = dragAmount
                     when {
-                        y > 0 -> { scrolledDown = true; Log.d("PAK", "Scrolled down") }   // User swipes down
-                        y < 0 -> { scrolledUp = true; Log.d("PAK", "Scrolled up") } // User swipes up
+                        y > 0 -> {
+                            scrolledDown = true; Log.d("PAK", "Scrolled down")
+                        }   // User swipes down
+                        y < 0 -> {
+                            scrolledUp = true; Log.d("PAK", "Scrolled up")
+                        } // User swipes up
                     }
 
                     offsetX += dragAmount.x
@@ -160,7 +222,7 @@ fun ScrapeImages(url: String) {
         val client = OkHttpClient()
         client.newCall(request).enqueue(object: Callback {
 
-            // When a response is recieved
+            // When a response is received
             override fun onResponse(call: Call, response: Response) {
                 val body = response.body?.string().toString()
 
